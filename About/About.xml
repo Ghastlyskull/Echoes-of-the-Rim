@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ModMetaData>
-	<packageId>Ghastly.EchosOfTheRim</packageId>
-    <name>Echos of the Rim</name>
+	<packageId>Ghastly.EchoesOfTheRim</packageId>
+    <name>Echoes of the Rim</name>
     <author>ghastlyskull</author>
     <supportedVersions>
 		<li>1.6</li>
