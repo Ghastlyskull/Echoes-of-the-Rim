@@ -24,8 +24,17 @@ namespace EOTR
         }
         public override void DoSettingsWindowContents(Rect inRect)
         {
-            Log.Message(Settings.structureDataSaved.Count);
             Settings.DoWindowContents(inRect);
         }
     }
+    [StaticConstructorOnStartup]
+    public static class Starter
+    {
+        static Starter()
+        {
+            EchoesOfTheRim_Mod.Settings.Initialize();
+        }
+    }
+
 }
+
