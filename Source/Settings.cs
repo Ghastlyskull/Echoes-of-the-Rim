@@ -107,6 +107,12 @@ namespace EOTR
                 modsEnabled["Biotech"] = true;
             }
             #endregion
+            #region Odyssey
+            if (ModLister.OdysseyInstalled)
+            {
+                modsEnabled["Odyssey"] = true;
+            }
+            #endregion
             #region The Rest
             foreach (string modName in mods)
             {
