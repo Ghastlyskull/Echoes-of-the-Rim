@@ -56,10 +56,10 @@ namespace EOTR
         private readonly Dictionary<string, List<string>> siteDictionary = new Dictionary<string, List<string>>
 {
     { "Alpha Genes", new List<string> { "AG_AbandonedBiotechLab" } },
-    { "Alpha Books", new List<string> { "ABooks_RuinedLibary" } },
+    { "Alpha Books", new List<string> { "ABooks_RuinedLibrary" } },
     { "Vanilla Genetics Expanded", new List<string> { "GR_AbandonedLab" } },
     { "Vanilla Quests Expanded - Generator", new List<string> { "VQE_Quest1Site" } },
-    { "Vanilla Quests Expanded - Deadlife", new List<string> { "VQE_Ancient Silo" } },
+    { "Vanilla Quests Expanded - Deadlife", new List<string> { "VQE_AncientSilo" } },
     { "Mechanitor Orbital Platform", new List<string> { "Opportunity_AbandonedMechanitorPlatform" } },
 
     { "Ancient urban ruins", new List<string>
