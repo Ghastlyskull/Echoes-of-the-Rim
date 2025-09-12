@@ -1,3 +1,11 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <LanguageData>
+	<EOTR_General>General</EOTR_General>
+	<EOTR_DespawnTime>Despawn Time (in days): {0}</EOTR_DespawnTime>
+	<EOTR_ChanceForEvent>Chance for Event per tile: {0}%"</EOTR_ChanceForEvent>
+	<EOTR_Structures>Structures</EOTR_Structures>
+	<EOTR_Weight>Weight: {0}</EOTR_Weight>
+	<EOTR_CaravanSite_LetterText>While travelling, your caravan spotted a site: {0}.\nWould you like to approach the site now or mark it for later?</EOTR_CaravanSite_LetterText>
+	<EOTR_CaravanSite_LetterEnterNow>Enter Now</EOTR_CaravanSite_LetterEnterNow>
+	<EOTR_CaravanSite_LetterMarkForLater>Mark for Later</EOTR_CaravanSite_LetterMarkForLater>
 </LanguageData>
