@@ -23,7 +23,7 @@ namespace EOTR.HarmonyPatches
             {
                 if (Rand.Chance(EchoesOfTheRim_Mod.Settings.chanceForInterruptionPerTile))
                 {
-                    Helper.TrySetupCaravanEvent(___caravan.Tile);
+                    Helper.TrySetupCaravanEvent(___caravan);
                 }
             }
         }

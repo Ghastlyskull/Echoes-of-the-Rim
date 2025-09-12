@@ -167,18 +167,18 @@ namespace EOTR
             listing_Standard.Begin(rect3);
             using (new TextBlock(GameFont.Medium))
             {
-                listing_Standard.Label("General");
+                listing_Standard.Label("EOTR_General".Translate());
             }
             Text.Anchor = TextAnchor.MiddleLeft;
-            listing_Standard.Label("Despawn Time (in days): " + despawnTimer.ToString());
+            listing_Standard.Label("EOTR_DespawnTime".Translate(despawnTimer.ToString()));
             listing_Standard.TextFieldNumeric(ref despawnTimer, ref despawnTimerBuffer, 1, 1000);
             Text.Anchor = TextAnchor.UpperLeft;
-            listing_Standard.Label($"Chance for Event per tile: {chanceForInterruptionPerTile * 100}%");
+            listing_Standard.Label("EOTR_ChanceForEvent".Translate(chanceForInterruptionPerTile * 100));
             chanceForInterruptionPerTile = (float)Math.Round(listing_Standard.Slider(chanceForInterruptionPerTile, 0, 1), 2);
             listing_Standard.GapLine();
             using (new TextBlock(GameFont.Medium))
             {
-                listing_Standard.Label("Structures");
+                listing_Standard.Label("EOTR_Structures".Translate());
             }
             foreach (string modName in modsEnabled.Keys)
             {
@@ -190,7 +190,7 @@ namespace EOTR
                         listing_Standard.CheckboxLabeled($"{structureDataActual[siteName].labelCap}({siteName})", ref structureDataActual[siteName].enabled);
                         if (structureDataActual[siteName].enabled)
                         {
-                            listing_Standard.Label("Weight: " + structureDataActual[siteName].weight.ToString());
+                            listing_Standard.Label("EOTR_Weight".Translate(structureDataActual[siteName].weight.ToString()));
                             structureDataActual[siteName].weight = (int)listing_Standard.Slider(structureDataActual[siteName].weight, 1, 100);
                         }
                         structureDataSaved[siteName] = structureDataActual[siteName];
