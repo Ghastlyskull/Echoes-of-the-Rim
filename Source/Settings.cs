@@ -34,12 +34,12 @@ namespace EOTR
 
     public class EchoesOfTheRim_Settings : ModSettings
     {
-        //[TweakValue("AAAADefaultHeight", 1f, 400f)]
+        [TweakValue("AAAADefaultHeight", 1f, 400f)]
         public static float defaultHeight = 250f;
-        //[TweakValue("AAAALabelHeight", 1f, 100f)]
-        public static float labelHeight = 15f;
-        //[TweakValue("AAAAOptionHeight", 1f, 100f)]
-        public static float optionHeight = 70f;
+        [TweakValue("AAAALabelHeight", 1f, 100f)]
+        public static float labelHeight = 20f;
+        [TweakValue("AAAAOptionHeight", 1f, 100f)]
+        public static float optionHeight = 75f;
         public int despawnTimer = 30;
         private string despawnTimerBuffer;
         public float chanceForInterruptionPerTile = 0.02f;
@@ -66,9 +66,9 @@ namespace EOTR
         { "AM_MALL_S_Site", "AM_MALL_L_Site", "AM_ReserveSite", "AM_StreetSite", "ACM_AncientRandomComplex" } },
 
     { "Ancient mining industry", new List<string>
-        { "AbondonedMine_Site", "MineralScreeningStation_Site", "AbandonedPlasteelMineSite_Site",
-          "AbandonedUraniumMineSite_Site", "AbandonedSteelMineSite_Site",
-          "Ancient OpenPitMiningSite_Site", "AncientTunnelRuins_Site" } },
+        { "AbandonedMine_Site", "MineralScreeningStation_Site", "AbandonedPlasteelMineSite_Site",
+          "AbandonedUraniumMiningSite_Site", "AbandonedSteelMineSite_Site",
+          "AncientOpenPitMiningSite_Site", "AncientTunnelRuins_Site" } },
 
     { "Ancient hydroponic farm facilities", new List<string>
         { "damaged_ancient_cotton_farm_SitePart", "damaged_ancient_Devilstrand_farm_SitePart",
