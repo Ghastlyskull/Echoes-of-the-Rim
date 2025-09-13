@@ -17,18 +17,24 @@ namespace EOTR
         public string labelCap;
         public bool enabled;
         public int weight;
+        public bool orbital;
+        public string source;
         public StructureData() { }
-        public StructureData(string labelCap, bool enabled, int weight)
+        public StructureData(string labelCap, bool enabled, int weight, bool orbital, string source)
         {
             this.labelCap = labelCap;
             this.enabled = enabled;
             this.weight = weight;
+            this.orbital = orbital;
+            this.source = source;
         }
         public void ExposeData()
         {
             Scribe_Values.Look(ref labelCap, "labelCap", "Unknown Structure");
             Scribe_Values.Look(ref enabled, "enabled", true);
             Scribe_Values.Look(ref weight, "weight", 1);
+            Scribe_Values.Look(ref orbital, "orbital", false);
+            Scribe_Values.Look(ref source, "source", "Unknown Source");
         }
     }
 
@@ -46,46 +52,36 @@ namespace EOTR
         public Dictionary<string, StructureData> structureDataSaved = [];
         public Dictionary<string, StructureData> structureDataActual = [];
         private Vector2 _scrollPosition;
-        public Dictionary<string, bool> modsEnabled = [];
+        public List<string> modsEnabled = [];
         //Big and ugly but it just works
         private readonly string[] mods ={
             "Alpha Genes", "Alpha Books", "Vanilla Genetics Expanded", "Vanilla Quests Expanded - Generator",
             "Vanilla Quests Expanded - Deadlife", "Mechanitor Orbital Platform", "Ancient urban ruins",
             "Ancient mining industry", "Ancient hydroponic farm facilities", "Protocol Anomaly: Syndicate"
         };
-        private readonly Dictionary<string, List<string>> siteDictionary = new Dictionary<string, List<string>>
-{
-    { "Alpha Genes", new List<string> { "AG_AbandonedBiotechLab" } },
-    { "Alpha Books", new List<string> { "ABooks_RuinedLibrary" } },
-    { "Vanilla Genetics Expanded", new List<string> { "GR_AbandonedLab" } },
-    { "Vanilla Quests Expanded - Generator", new List<string> { "VQE_Quest1Site" } },
-    { "Vanilla Quests Expanded - Deadlife", new List<string> { "VQE_AncientSilo" } },
-    { "Mechanitor Orbital Platform", new List<string> { "Opportunity_AbandonedMechanitorPlatform" } },
-
-    { "Ancient urban ruins", new List<string>
-        { "AM_MALL_S_Site", "AM_MALL_L_Site", "AM_ReserveSite", "AM_StreetSite", "ACM_AncientRandomComplex" } },
-
-    { "Ancient mining industry", new List<string>
-        { "AbandonedMine_Site", "MineralScreeningStation_Site", "AbandonedPlasteelMineSite_Site",
+        private readonly Dictionary<string, List<string>> siteDictionaryOrbit = new() {{ "Odyssey", ["Opportunity_OrbitalWreck", "Opportunity_MechanoidPlatform", "Opportunity_AbandonedPlatform"] },
+            { "Mechanitor Orbital Platform", ["Opportunity_AbandonedMechanitorPlatform"]}};
+        private readonly Dictionary<string, List<string>> siteDictionaryGround = new()
+        {
+    { "Alpha Genes", ["AG_AbandonedBiotechLab"] },
+    { "Alpha Books", [ "ABooks_RuinedLibrary" ] },
+    { "Vanilla Genetics Expanded", ["GR_AbandonedLab"] },
+    { "Vanilla Quests Expanded - Generator", [ "VQE_Quest1Site" ] },
+    { "Vanilla Quests Expanded - Deadlife", ["VQE_AncientSilo"]},
+    { "Ancient urban ruins",[ "AM_MALL_S_Site", "AM_MALL_L_Site", "AM_ReserveSite", "AM_StreetSite", "ACM_AncientRandomComplex" ] },
+    { "Ancient mining industry", ["AbandonedMine_Site", "MineralScreeningStation_Site", "AbandonedPlasteelMineSite_Site",
           "AbandonedUraniumMiningSite_Site", "AbandonedSteelMineSite_Site",
-          "AncientOpenPitMiningSite_Site", "AncientTunnelRuins_Site" } },
-
-    { "Ancient hydroponic farm facilities", new List<string>
-        { "damaged_ancient_cotton_farm_SitePart", "damaged_ancient_Devilstrand_farm_SitePart",
+          "AncientOpenPitMiningSite_Site", "AncientTunnelRuins_Site" ] },
+    { "Ancient hydroponic farm facilities", ["damaged_ancient_cotton_farm_SitePart", "damaged_ancient_Devilstrand_farm_SitePart",
           "discarded_nutrient_cream_factory_SitePart", "discarded_nutrient_solution_factory_SitePart",
-          "damaged_ancient_grain_farm_B_SitePart", "damaged_ancient_grain_farm_A_SitePart" } },
-
-    { "Protocol Anomaly: Syndicate", new List<string> { "AncientSite" } },
-
-    { "Odyssey", new List<string>
-        { "Opportunity_OrbitalWreck", "Opportunity_MechanoidPlatform", "Opportunity_AbandonedPlatform",
-          "AncientStockpile", "AbandonedSettlement", "OpportunitySite_AncientInfestedSettlement",
+          "damaged_ancient_grain_farm_B_SitePart", "damaged_ancient_grain_farm_A_SitePart" ] },
+    { "Protocol Anomaly: Syndicate", ["AncientSite"] },
+    { "Odyssey", [ "AncientStockpile", "AbandonedSettlement", "OpportunitySite_AncientInfestedSettlement",
           "OpportunitySite_AncientWarehouse", "OpportunitySite_AncientChemfuelRefinery",
-          "OpportunitySite_AncientGarrison", "OpportunitySite_AncientLaunchsite" } },
-
-    { "Biotech", new List<string> { "AncientComplex_Mechanitor" } },
-    { "Ideology", new List<string> { "AncientComplex" } },
-            {"Core", new List<string>{"BanditCamp"} }
+          "OpportunitySite_AncientGarrison", "OpportunitySite_AncientLaunchSite"] },
+    { "Biotech", ["AncientComplex_Mechanitor"] },
+    { "Ideology", ["AncientComplex"] },
+    {"Core", ["BanditCamp"] }
 };
 
 
@@ -93,24 +89,24 @@ namespace EOTR
         {
             structureDataActual = [];
             #region Core
-            modsEnabled["Core"] = true;
+            modsEnabled.Add("Core");
             #endregion
             #region Ideology
             if (ModLister.IdeologyInstalled)
             {
-                modsEnabled["Ideology"] = true;
+                modsEnabled.Add("Ideology");
             }
             #endregion
             #region Biotech
             if (ModLister.BiotechInstalled)
             {
-                modsEnabled["Biotech"] = true;
+                modsEnabled.Add("Biotech");
             }
             #endregion
             #region Odyssey
             if (ModLister.OdysseyInstalled)
             {
-                modsEnabled["Odyssey"] = true;
+                modsEnabled.Add("Odyssey");
             }
             #endregion
             #region The Rest
@@ -118,17 +114,17 @@ namespace EOTR
             {
                 if (ModLister.HasActiveModWithName(modName))
                 {
-                    modsEnabled[modName] = true;
+                    modsEnabled.Add(modName);
                 }
             }
             #endregion
             #region Loading settings
-            foreach (string modName in modsEnabled.Keys)
+            foreach (string modName in modsEnabled)
             {
-                if (modsEnabled[modName])
+                if(siteDictionaryGround.ContainsKey(modName))
                 {
                     Log.Message("Checking for " + modName);
-                    foreach (string defName in siteDictionary[modName])
+                    foreach (string defName in siteDictionaryGround[modName])
                     {
                         Log.Message(" - " + defName);
                         if (structureDataSaved.ContainsKey(defName))
@@ -137,12 +133,32 @@ namespace EOTR
                         }
                         else
                         {
-                            StructureData newData = new StructureData(defName, true, 10);
+                            StructureData newData = new StructureData(defName, true, 10, false, modName);
                             newData.labelCap = DefDatabase<SitePartDef>.AllDefsListForReading.Where(x => x.defName == defName).First().LabelCap;
                             structureDataActual[defName] = newData;
                         }
                     }
                 }
+                if (siteDictionaryOrbit.ContainsKey(modName))
+                {
+                    Log.Message("Checking for " + modName);
+                    foreach (string defName in siteDictionaryOrbit[modName])
+                    {
+                        Log.Message(" - " + defName);
+                        if (structureDataSaved.ContainsKey(defName))
+                        {
+                            structureDataActual[defName] = structureDataSaved[defName];
+                        }
+                        else
+                        {
+                            StructureData newData = new StructureData(defName, true, 10, true, modName);
+                            newData.labelCap = DefDatabase<SitePartDef>.AllDefsListForReading.Where(x => x.defName == defName).First().LabelCap;
+                            structureDataActual[defName] = newData;
+                        }
+                    }
+                }
+
+
             }
             #endregion
             structureDataSaved = structureDataActual;
@@ -158,13 +174,10 @@ namespace EOTR
         {
             Rect rect2 = new Rect(inRect);
             rect2.height = defaultHeight;
-            foreach (string modName in modsEnabled.Keys)
+            foreach (string modName in modsEnabled)
             {
-                if (modsEnabled[modName])
-                {
-                    rect2.height += labelHeight;
-                    rect2.height += siteDictionary[modName].Count * optionHeight;
-                }
+                rect2.height += labelHeight;
+                rect2.height += (siteDictionaryGround[modName].Count + siteDictionaryOrbit[modName].Count) * optionHeight;
             }
             Rect rect3 = rect2;
             Widgets.AdjustRectsForScrollView(inRect, ref rect2, ref rect3);
@@ -186,21 +199,19 @@ namespace EOTR
             {
                 listing_Standard.Label("EOTR_Structures".Translate());
             }
-            foreach (string modName in modsEnabled.Keys)
+            foreach (string modName in modsEnabled)
             {
-                if (modsEnabled[modName])
+
+                listing_Standard.Label(modName);
+                foreach (string siteName in siteDictionaryGround[modName].Concat(siteDictionaryOrbit[modName]))
                 {
-                    listing_Standard.Label(modName);
-                    foreach (string siteName in siteDictionary[modName])
+                    listing_Standard.CheckboxLabeled($"{structureDataActual[siteName].labelCap}({siteName})", ref structureDataActual[siteName].enabled);
+                    if (structureDataActual[siteName].enabled)
                     {
-                        listing_Standard.CheckboxLabeled($"{structureDataActual[siteName].labelCap}({siteName})", ref structureDataActual[siteName].enabled);
-                        if (structureDataActual[siteName].enabled)
-                        {
-                            listing_Standard.Label("EOTR_Weight".Translate(structureDataActual[siteName].weight.ToString()));
-                            structureDataActual[siteName].weight = (int)listing_Standard.Slider(structureDataActual[siteName].weight, 1, 100);
-                        }
-                        structureDataSaved[siteName] = structureDataActual[siteName];
+                        listing_Standard.Label("EOTR_Weight".Translate(structureDataActual[siteName].weight.ToString()));
+                        structureDataActual[siteName].weight = (int)listing_Standard.Slider(structureDataActual[siteName].weight, 1, 100);
                     }
+                    structureDataSaved[siteName] = structureDataActual[siteName];
                 }
             }
             listing_Standard.End();

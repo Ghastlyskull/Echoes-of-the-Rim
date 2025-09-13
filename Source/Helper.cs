@@ -1,7 +1,9 @@
 ﻿using LudeonTK;
 using RimWorld;
 using RimWorld.Planet;
+using RimWorld.QuestGen;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -23,7 +25,7 @@ namespace EOTR
             {
                 return;
             }
-            SitePartDef def = GetRandomSite(caravan.Tile.Layer);
+            SitePartDef def = GetRandomGroundSite();
             Site site = SiteMaker.TryMakeSite([def], caravan.Tile);
             site.GetComponent<TimeoutComp>().StartTimeout(60000 * EchoesOfTheRim_Mod.Settings.despawnTimer);
             if (site == null)
@@ -36,15 +38,17 @@ namespace EOTR
                 SendLetterCaravan(caravan, site);
             }
         }
-        public static SitePartDef GetRandomSite(PlanetLayer layer)
+        public static SitePartDef GetRandomGroundSite()
         {
-            string potential = EchoesOfTheRim_Mod.Settings.structureDataActual.Keys.Where(x => EchoesOfTheRim_Mod.Settings.structureDataActual[x].enabled == true).RandomElementByWeight(x => EchoesOfTheRim_Mod.Settings.structureDataActual[x].weight);
+            string potential = EchoesOfTheRim_Mod.Settings.structureDataActual.Keys.Where(x => EchoesOfTheRim_Mod.Settings.structureDataActual[x].enabled == true && !EchoesOfTheRim_Mod.Settings.structureDataActual[x].orbital).RandomElementByWeight(x => EchoesOfTheRim_Mod.Settings.structureDataActual[x].weight);
             Log.Message(potential);
             return DefDatabase<SitePartDef>.AllDefsListForReading.Where(x => x.defName == potential).First();
-            /*            List<string> possible = EchoesOfTheRim_Mod.Settings.structureDataActual.Keys.Where(x => EchoesOfTheRim_Mod.Settings.structureDataActual[x].enabled == true).ToList();
-                        List<SitePartDef> defs = DefDatabase<SitePartDef>.AllDefsListForReading.Where(x => possible.Contains(x.defName) && x.).ToList();
-                        .RandomElementByWeight(x => EchoesOfTheRim_Mod.Settings.structureDataActual[x].weight)
-                        return def;*/
+        }
+        public static SitePartDef GetRandomOrbitSite()
+        {
+            string potential = EchoesOfTheRim_Mod.Settings.structureDataActual.Keys.Where(x => EchoesOfTheRim_Mod.Settings.structureDataActual[x].enabled == true && EchoesOfTheRim_Mod.Settings.structureDataActual[x].orbital).RandomElementByWeight(x => EchoesOfTheRim_Mod.Settings.structureDataActual[x].weight);
+            Log.Message(potential);
+            return DefDatabase<SitePartDef>.AllDefsListForReading.Where(x => x.defName == potential).First();
         }
         public static void SendLetterCaravan(Caravan caravan, Site site)
         {
@@ -67,13 +71,23 @@ namespace EOTR
 
         public static void TrySetupTransporterEvent(TravellingTransporters travellingTransporters, List<ActiveTransporterInfo> transporters, PlanetTile initialTile, Pawn p)
         {
-
-            Log.Message("Part 1");
-            PlanetTile eventTile = GetEventTile(initialTile, travellingTransporters.destinationTile);
+            PlanetTile eventTile;
+            bool orbit = false;
+            if (initialTile.LayerDef == travellingTransporters.destinationTile.LayerDef)
+            {
+                eventTile = GetEventTilePathed(initialTile, travellingTransporters.destinationTile);
+                orbit = initialTile.LayerDef == PlanetLayerDefOf.Orbit ? true : false;
+            }
+            else
+            {
+                eventTile = GetEventTileRandom(initialTile, travellingTransporters.destinationTile, out orbit);
+            }
+            Log.Message(orbit);
+            Log.Message(eventTile);
             Log.Message("Part 2");
-
-            SitePartDef def = GetRandomSite(eventTile.Layer);
-            Site site = SiteMaker.TryMakeSite([def], eventTile);
+            SitePartDef def;
+            def = orbit ? GetRandomOrbitSite() : GetRandomGroundSite();
+            Site site = CreateSite(def, eventTile);
             site.GetComponent<TimeoutComp>().StartTimeout(60000 * EchoesOfTheRim_Mod.Settings.despawnTimer);
             if (site == null)
             {
@@ -86,19 +100,44 @@ namespace EOTR
                 SendLetterTransporter(p, site);
             }
         }
-        private static void SendLetterTransporter(Pawn p, Site site)
+        public static Site CreateSite(SitePartDef def, PlanetTile tile)
         {
-            DiaNode startNode = new DiaNode("EOTR_TransporterSite_LetterText".Translate(p.LabelCap, site.LabelCap));
-            DiaOption markForLater = new DiaOption("EOTR_CaravanSite_LetterMarkForLater".Translate());
-            markForLater.resolveTree = true;
-            startNode.options.Add(markForLater);
-            Find.WindowStack.Add(new Dialog_NodeTree(startNode));
+            EchoesOfTheRim_Mod.Settings.structureDataActual.TryGetValue(def.defName, out var data);
+            if (data == null || !data.enabled)
+            {
+                Log.Error("Tried to create a site with a disabled or null def.");
+                return null;
+            }
+            Site site;
+            switch (data.source)
+            {
+                case "Odyssey":
+                    site = OdysseySites(def, tile);
+                    break;
+                default:
+                    site = null;
+                    break;
+            }
+            return site;
         }
 
-        public static PlanetTile GetEventTile(PlanetTile initialTile, PlanetTile destTile)
+        private static Site OdysseySites(SitePartDef def, PlanetTile tile)
         {
-            List<PlanetTile> pathTiles = GetTilesBetween2Tiles(initialTile, destTile);
-            List<PlanetTile> compatTiles = pathTiles.Distinct().Where(t => t.Valid && !Find.World.Impassable(t) && Find.WorldObjects.SiteAt(t) == null).ToList();
+            switch (def.defName)
+            {
+                case "Opportunity_AbandonedPlatform":
+                case "Opportunity_MechanoidPlatform":
+                case "Opportunity_OrbitalWreck":
+                    Site site = SiteMaker.MakeSite([new SitePartDefWithParams(def, new SitePartParams())], tile, null, true, WorldObjectDefOf.ClaimableSpaceSite);
+                    site.customLabel = "Unknown Site";
+                    return site;
+                default:
+                    return null;
+            }
+        }
+        private static PlanetTile GetProperTile(List<PlanetTile> tiles)
+        {
+            List<PlanetTile> compatTiles = tiles.Distinct().Where(t => t.Valid && !Find.World.Impassable(t) && Find.WorldObjects.SiteAt(t) == null).ToList();
             Log.Message(compatTiles.Count());
             List<PlanetTile> possibleChoices = [.. compatTiles];
             foreach (var t in compatTiles)
@@ -108,6 +147,44 @@ namespace EOTR
                 possibleChoices.AddRange(neighbors.Where(t => t.Valid && !Find.World.Impassable(t) && Find.WorldObjects.SiteAt(t) == null && !possibleChoices.Contains(t)));
             }
             return possibleChoices.RandomElement();
+        }
+        private static PlanetTile GetEventTileRandom(PlanetTile initialTile, PlanetTile destTile, out bool orbit)
+        {
+            List<PlanetTile> pathTiles;
+            if (Rand.Chance(0.5f))
+            {
+                PlanetTile tempTile = initialTile.Layer.FastTileFinder.Query(new(destTile, 0f, 0f)).First();
+                pathTiles = GetTilesBetween2Tiles(initialTile, tempTile);
+            }
+            else
+            {
+                PlanetTile tempTile = destTile.Layer.FastTileFinder.Query(new(initialTile, 0f, 0f)).First();
+                pathTiles = GetTilesBetween2Tiles(destTile, tempTile);
+            }
+            if (pathTiles.First().LayerDef == PlanetLayerDefOf.Orbit)
+            {
+                orbit = true;
+            }
+            else
+            {
+                orbit = false;
+            }
+            return GetProperTile(pathTiles);
+        }
+
+        private static void SendLetterTransporter(Pawn p, Site site)
+        {
+            DiaNode startNode = new DiaNode("EOTR_TransporterSite_LetterText".Translate(p.LabelCap, site.LabelCap));
+            DiaOption markForLater = new DiaOption("EOTR_CaravanSite_LetterMarkForLater".Translate());
+            markForLater.resolveTree = true;
+            startNode.options.Add(markForLater);
+            Find.WindowStack.Add(new Dialog_NodeTree(startNode));
+        }
+
+        public static PlanetTile GetEventTilePathed(PlanetTile initialTile, PlanetTile destTile)
+        {
+            List<PlanetTile> pathTiles = GetTilesBetween2Tiles(initialTile, destTile);
+            return GetProperTile(pathTiles);
         }
         public static List<PlanetTile> GetTilesBetween2Tiles(PlanetTile startTile, PlanetTile destTile)
         {
@@ -133,21 +210,15 @@ namespace EOTR
             float[] array = world.pathGrid.layerMovementDifficulty[startTile.Layer];
             List<PlanetTile> path = [tile];
             int iterations = 0;
-            Log.Message("Starting loop");
-            while (tile != destTile || iterations < 3000)
+            while (tile != destTile || iterations < 30000)
             {
-                Log.Message(iterations);
                 List<PlanetTile> neighbors = [];
                 tile.Layer.GetTileNeighbors(tile, neighbors);
                 PlanetTile closestNeighbor = neighbors.First();
                 float closestDist = grid.ApproxDistanceInTiles(GenMath.SphericalDistance(grid.GetTileCenter(closestNeighbor).normalized, normalized));
-                Log.Message(closestNeighbor);
                 for (int i = 1; i < neighbors.Count(); i++)
                 {
-                    Log.Message("Neighbor:");
-                    Log.Message(i);
                     PlanetTile planetTile = neighbors[i];
-                    Log.Message(planetTile);
                     Vector3 tileCenter = grid.GetTileCenter(planetTile);
                     float potential = grid.ApproxDistanceInTiles(GenMath.SphericalDistance(tileCenter.normalized, normalized));
                     if (potential < closestDist)
@@ -161,6 +232,11 @@ namespace EOTR
                 iterations++;
             }
             return path;
+        }
+
+        public static void ProcessSite(Tile tile, SitePartDef def)
+        {
+
         }
     }
 }
