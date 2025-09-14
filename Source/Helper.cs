@@ -7,6 +7,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Reflection.Emit;
 using System.Text;
 using System.Threading.Tasks;
@@ -87,14 +88,16 @@ namespace EOTR
             Log.Message("Part 2");
             SitePartDef def;
             def = orbit ? GetRandomOrbitSite() : GetRandomGroundSite();
+            Log.Message("Part 3");
             Site site = CreateSite(def, eventTile);
-            site.GetComponent<TimeoutComp>().StartTimeout(60000 * EchoesOfTheRim_Mod.Settings.despawnTimer);
+            Log.Message("Part 4");
             if (site == null)
             {
-                Log.Error("Could not find any valid faction for this site.");
+                Log.Error("Could not make a site.");
             }
             else
             {
+                site.GetComponent<TimeoutComp>().StartTimeout(60000 * EchoesOfTheRim_Mod.Settings.despawnTimer);
                 Find.WorldObjects.Add(site);
                 CameraJumper.TryJump(site);
                 SendLetterTransporter(p, site);
@@ -114,13 +117,69 @@ namespace EOTR
                 case "Odyssey":
                     site = OdysseySites(def, tile);
                     break;
+                case "Ancient urban ruins":
+                    site = AncientUrbanRuinsSites(def, tile);
+                    break;
                 default:
-                    site = null;
+                    site = SiteMaker.TryMakeSite([def], tile);
                     break;
             }
             return site;
         }
+        private static Site AncientUrbanRuinsSites(SitePartDef def, PlanetTile tile)
+        {
+            WorldObjectDef objectDef = DefDatabase<WorldObjectDef>.GetNamed("AM_CustomSite");
+            switch (def.defName)
+            {
+                case "AM_Mall_S_Site":
+                case "AM_StreetSite":
+                case "AM_ReserveSite":
+                case "AM_MALL_L_Site":
+                    Site site = SiteMaker.MakeSite([new SitePartDefWithParams(def, new SitePartParams())], tile, null, true, objectDef);
+                    site.customLabel = "Unknown Site";
+                    return site;
+                case "ACM_AncientRandomComplex":
+                    SimpleCurve ComplexSizeOverPointsCurve = new(){
+                                                                         new CurvePoint(0f, 30f),
+                                                                         new CurvePoint(10000f, 50f)
+                                                                       };
 
+                    SimpleCurve ThreatPointsOverPointsCurve = new SimpleCurve{
+                                                                                   new CurvePoint(35f, 38.5f),
+                                                                                   new CurvePoint(400f, 165f),
+                                                                                   new CurvePoint(10000f, 4125f)
+                                                                             };
+
+                    int num = (int)ComplexSizeOverPointsCurve.Evaluate(7000);
+                    StructureGenParams psarms = new StructureGenParams
+                    {
+                        size = new IntVec2(num, num)
+                    };
+                    LayoutStructureSketch layoutStructureSketch = DefDatabase<LayoutDef>.GetNamed("ACM_AncientRandomComplex_Loot").Worker.GenerateStructureSketch(psarms);
+                    layoutStructureSketch.spawned = false;
+                    if (layoutStructureSketch != null)
+                    {
+                        layoutStructureSketch.spawned = false;
+                        SitePartParams parms = new SitePartParams
+                        {
+                            threatPoints = (Find.Storyteller.difficulty.allowViolentQuests ? ThreatPointsOverPointsCurve.Evaluate(StorytellerUtility.DefaultSiteThreatPointsNow()) : 0f),
+                            ancientLayoutStructureSketch = layoutStructureSketch,
+                            ancientComplexRewardMaker = ThingSetMakerDefOf.MapGen_AncientComplexRoomLoot_Better
+                        };
+                        site = SiteMaker.MakeSite(Gen.YieldSingle(new SitePartDefWithParams(def, parms)), tile, Faction.OfAncients);
+                        TimedDetectionRaids component = site.GetComponent<TimedDetectionRaids>();
+                        if (component != null)
+                        {
+                            component.alertRaidsArrivingIn = true;
+                        }
+                        return site;
+                    }
+                    return null;
+                default:
+                    return null;
+
+            }
+        }
         private static Site OdysseySites(SitePartDef def, PlanetTile tile)
         {
             switch (def.defName)
@@ -234,9 +293,5 @@ namespace EOTR
             return path;
         }
 
-        public static void ProcessSite(Tile tile, SitePartDef def)
-        {
-
-        }
     }
 }
