@@ -190,6 +190,46 @@ namespace EOTR
                     Site site = SiteMaker.MakeSite([new SitePartDefWithParams(def, new SitePartParams())], tile, null, true, WorldObjectDefOf.ClaimableSpaceSite);
                     site.customLabel = "Unknown Site";
                     return site;
+                case "OpportunitySite_AncientInfestedSettlement":
+                    tile.Tile.AddMutator(DefDatabase<TileMutatorDef>.GetNamed("AncientInfestedSettlement"));
+                    site = SiteMaker.MakeSite([new SitePartDefWithParams(def, new SitePartParams
+                    {
+                        threatPoints = (Find.Storyteller.difficulty.allowViolentQuests ? StorytellerUtility.DefaultSiteThreatPointsNow() : 0f)
+                    })], tile, null, true, WorldObjectDefOf.ClaimableSite);
+                    site.customLabel = "Unknown Site";
+                    return site;
+                case "OpportunitySite_AncientWarehouse":
+                    tile.Tile.AddMutator(DefDatabase<TileMutatorDef>.GetNamed("AncientWarehouse"));
+                    site = SiteMaker.MakeSite([new SitePartDefWithParams(def, new SitePartParams
+                    {
+                        threatPoints = (Find.Storyteller.difficulty.allowViolentQuests ? StorytellerUtility.DefaultSiteThreatPointsNow() : 0f)
+                    })], tile, null, true, WorldObjectDefOf.ClaimableSite);
+                    site.customLabel = "Unknown Site";
+                    return site;
+                case "OpportunitySite_AncientStructureLaunchSite":
+                    tile.Tile.AddMutator(DefDatabase<TileMutatorDef>.GetNamed("AncientLaunchSite"));
+                    site = SiteMaker.MakeSite([new SitePartDefWithParams(def, new SitePartParams
+                    {
+                        threatPoints = (Find.Storyteller.difficulty.allowViolentQuests ? StorytellerUtility.DefaultSiteThreatPointsNow() : 0f)
+                    })], tile, null, true, WorldObjectDefOf.ClaimableSite);
+                    site.customLabel = "Unknown Site";
+                    return site;
+                case "OpportunitySite_AncientGarrison":
+                    tile.Tile.AddMutator(DefDatabase<TileMutatorDef>.GetNamed("AncientGarrison"));
+                    site = SiteMaker.MakeSite([new SitePartDefWithParams(def, new SitePartParams
+                    {
+                        threatPoints = (Find.Storyteller.difficulty.allowViolentQuests ? StorytellerUtility.DefaultSiteThreatPointsNow() : 0f)
+                    })], tile, null, true, WorldObjectDefOf.ClaimableSite);
+                    site.customLabel = "Unknown Site";
+                    return site;
+                case "OpportunitySite_AncientChemfuelRefinery":
+                    tile.Tile.AddMutator(DefDatabase<TileMutatorDef>.GetNamed("AncientChemfuelRefinery"));
+                    site = SiteMaker.MakeSite([new SitePartDefWithParams(def, new SitePartParams
+                    {
+                        threatPoints = (Find.Storyteller.difficulty.allowViolentQuests ? StorytellerUtility.DefaultSiteThreatPointsNow() : 0f)
+                    })], tile, null, true, WorldObjectDefOf.ClaimableSite);
+                    site.customLabel = "Unknown Site";
+                    return site;
                 default:
                     return null;
             }
