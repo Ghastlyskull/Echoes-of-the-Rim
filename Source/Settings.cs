@@ -177,7 +177,16 @@ namespace EOTR
             foreach (string modName in modsEnabled)
             {
                 rect2.height += labelHeight;
-                rect2.height += (siteDictionaryGround[modName].Count + siteDictionaryOrbit[modName].Count) * optionHeight;
+                int count = 0;
+                if( siteDictionaryGround.ContainsKey(modName))
+                {
+                    count += siteDictionaryGround[modName].Count;
+                }
+                if (siteDictionaryOrbit.ContainsKey(modName))
+                {
+                    count += siteDictionaryOrbit[modName].Count;
+                }
+                rect2.height += count * optionHeight;
             }
             Rect rect3 = rect2;
             Widgets.AdjustRectsForScrollView(inRect, ref rect2, ref rect3);
@@ -203,17 +212,34 @@ namespace EOTR
             {
 
                 listing_Standard.Label(modName);
-                foreach (string siteName in siteDictionaryGround[modName].Concat(siteDictionaryOrbit[modName]))
+                if (siteDictionaryGround.ContainsKey(modName))
                 {
-                    listing_Standard.CheckboxLabeled($"{structureDataActual[siteName].labelCap}({siteName})", ref structureDataActual[siteName].enabled);
-                    if (structureDataActual[siteName].enabled)
+                    foreach (string siteName in siteDictionaryGround[modName])
                     {
-                        listing_Standard.Label("EOTR_Weight".Translate(structureDataActual[siteName].weight.ToString()));
-                        structureDataActual[siteName].weight = (int)listing_Standard.Slider(structureDataActual[siteName].weight, 1, 100);
+                        listing_Standard.CheckboxLabeled($"{structureDataActual[siteName].labelCap}({siteName})", ref structureDataActual[siteName].enabled);
+                        if (structureDataActual[siteName].enabled)
+                        {
+                            listing_Standard.Label("EOTR_Weight".Translate(structureDataActual[siteName].weight.ToString()));
+                            structureDataActual[siteName].weight = (int)listing_Standard.Slider(structureDataActual[siteName].weight, 1, 100);
+                        }
+                        structureDataSaved[siteName] = structureDataActual[siteName];
                     }
-                    structureDataSaved[siteName] = structureDataActual[siteName];
+                }
+                if (siteDictionaryOrbit.ContainsKey(modName))
+                {
+                    foreach (string siteName in siteDictionaryOrbit[modName])
+                    {
+                        listing_Standard.CheckboxLabeled($"{structureDataActual[siteName].labelCap}({siteName})", ref structureDataActual[siteName].enabled);
+                        if (structureDataActual[siteName].enabled)
+                        {
+                            listing_Standard.Label("EOTR_Weight".Translate(structureDataActual[siteName].weight.ToString()));
+                            structureDataActual[siteName].weight = (int)listing_Standard.Slider(structureDataActual[siteName].weight, 1, 100);
+                        }
+                        structureDataSaved[siteName] = structureDataActual[siteName];
+                    }
                 }
             }
+
             listing_Standard.End();
             Widgets.EndScrollView();
         }
