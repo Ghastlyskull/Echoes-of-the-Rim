@@ -1,20 +1,9 @@
-﻿using LudeonTK;
-using RimWorld;
+﻿using RimWorld;
 using RimWorld.Planet;
-using RimWorld.QuestGen;
-using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Reflection;
-using System.Reflection.Emit;
-using System.Text;
-using System.Threading.Tasks;
-using Unity.Collections;
 using UnityEngine;
 using Verse;
-using static System.Net.WebRequestMethods;
 
 namespace EOTR
 {
@@ -26,8 +15,8 @@ namespace EOTR
             {
                 return;
             }
-            SitePartDef def = GetRandomGroundSite();
-            Site site = SiteMaker.TryMakeSite([def], caravan.Tile);
+            string def = GetRandomGroundSite();
+            Site site = SiteMaker.TryMakeSite([DefDatabase<SitePartDef>.GetNamed(def)], caravan.Tile);
             site.GetComponent<TimeoutComp>().StartTimeout(60000 * EchoesOfTheRim_Mod.Settings.despawnTimer);
             if (site == null)
             {
@@ -39,17 +28,17 @@ namespace EOTR
                 SendLetterCaravan(caravan, site);
             }
         }
-        public static SitePartDef GetRandomGroundSite()
+        public static string GetRandomGroundSite()
         {
             string potential = EchoesOfTheRim_Mod.Settings.structureDataActual.Keys.Where(x => EchoesOfTheRim_Mod.Settings.structureDataActual[x].enabled == true && !EchoesOfTheRim_Mod.Settings.structureDataActual[x].orbital).RandomElementByWeight(x => EchoesOfTheRim_Mod.Settings.structureDataActual[x].weight);
             Log.Message(potential);
-            return DefDatabase<SitePartDef>.AllDefsListForReading.Where(x => x.defName == potential).First();
+            return potential;
         }
-        public static SitePartDef GetRandomOrbitSite()
+        public static string GetRandomOrbitSite()
         {
             string potential = EchoesOfTheRim_Mod.Settings.structureDataActual.Keys.Where(x => EchoesOfTheRim_Mod.Settings.structureDataActual[x].enabled == true && EchoesOfTheRim_Mod.Settings.structureDataActual[x].orbital).RandomElementByWeight(x => EchoesOfTheRim_Mod.Settings.structureDataActual[x].weight);
             Log.Message(potential);
-            return DefDatabase<SitePartDef>.AllDefsListForReading.Where(x => x.defName == potential).First();
+            return potential;
         }
         public static void SendLetterCaravan(Caravan caravan, Site site)
         {
@@ -86,7 +75,7 @@ namespace EOTR
             Log.Message(orbit);
             Log.Message(eventTile);
             Log.Message("Part 2");
-            SitePartDef def;
+            string def;
             def = orbit ? GetRandomOrbitSite() : GetRandomGroundSite();
             Log.Message("Part 3");
             Site site = CreateSite(def, eventTile);
@@ -103,9 +92,9 @@ namespace EOTR
                 SendLetterTransporter(p, site);
             }
         }
-        public static Site CreateSite(SitePartDef def, PlanetTile tile)
+        public static Site CreateSite(string def, PlanetTile tile)
         {
-            EchoesOfTheRim_Mod.Settings.structureDataActual.TryGetValue(def.defName, out var data);
+            EchoesOfTheRim_Mod.Settings.structureDataActual.TryGetValue(def, out var data);
             if (data == null || !data.enabled)
             {
                 Log.Error("Tried to create a site with a disabled or null def.");
@@ -121,21 +110,25 @@ namespace EOTR
                     site = AncientUrbanRuinsSites(def, tile);
                     break;
                 default:
-                    site = SiteMaker.TryMakeSite([def], tile);
+                    site = SiteMaker.TryMakeSite([DefDatabase<SitePartDef>.GetNamed(def)], tile);
                     break;
+            }
+            if (site != null)
+            {
+                site.customLabel = "Unknown Site";
             }
             return site;
         }
-        private static Site AncientUrbanRuinsSites(SitePartDef def, PlanetTile tile)
+        private static Site AncientUrbanRuinsSites(string def, PlanetTile tile)
         {
             WorldObjectDef objectDef = DefDatabase<WorldObjectDef>.GetNamed("AM_CustomSite");
-            switch (def.defName)
+            switch (def)
             {
                 case "AM_Mall_S_Site":
                 case "AM_StreetSite":
                 case "AM_ReserveSite":
                 case "AM_MALL_L_Site":
-                    Site site = SiteMaker.MakeSite([new SitePartDefWithParams(def, new SitePartParams())], tile, null, true, objectDef);
+                    Site site = SiteMaker.MakeSite([new SitePartDefWithParams(DefDatabase<SitePartDef>.GetNamed(def), new SitePartParams())], tile, null, true, objectDef);
                     site.customLabel = "Unknown Site";
                     return site;
                 case "ACM_AncientRandomComplex":
@@ -166,7 +159,7 @@ namespace EOTR
                             ancientLayoutStructureSketch = layoutStructureSketch,
                             ancientComplexRewardMaker = ThingSetMakerDefOf.MapGen_AncientComplexRoomLoot_Better
                         };
-                        site = SiteMaker.MakeSite(Gen.YieldSingle(new SitePartDefWithParams(def, parms)), tile, Faction.OfAncients);
+                        site = SiteMaker.MakeSite(Gen.YieldSingle(new SitePartDefWithParams(DefDatabase<SitePartDef>.GetNamed(def), parms)), tile, Faction.OfAncients);
                         TimedDetectionRaids component = site.GetComponent<TimedDetectionRaids>();
                         if (component != null)
                         {
@@ -180,58 +173,69 @@ namespace EOTR
 
             }
         }
-        private static Site OdysseySites(SitePartDef def, PlanetTile tile)
+        private static Site OdysseySites(string def, PlanetTile tile)
         {
-            switch (def.defName)
+            switch (def)
             {
                 case "Opportunity_AbandonedPlatform":
                 case "Opportunity_MechanoidPlatform":
                 case "Opportunity_OrbitalWreck":
-                    Site site = SiteMaker.MakeSite([new SitePartDefWithParams(def, new SitePartParams())], tile, null, true, WorldObjectDefOf.ClaimableSpaceSite);
-                    site.customLabel = "Unknown Site";
+                    Site site = SiteMaker.MakeSite([new SitePartDefWithParams(DefDatabase < SitePartDef >.GetNamed(def), new SitePartParams
+                    {
+                        threatPoints = (Find.Storyteller.difficulty.allowViolentQuests ? StorytellerUtility.DefaultSiteThreatPointsNow() : 0f)
+                    })], tile, null, true, WorldObjectDefOf.ClaimableSpaceSite);
                     return site;
                 case "OpportunitySite_AncientInfestedSettlement":
                     tile.Tile.AddMutator(DefDatabase<TileMutatorDef>.GetNamed("AncientInfestedSettlement"));
-                    site = SiteMaker.MakeSite([new SitePartDefWithParams(def, new SitePartParams
+                    site = SiteMaker.MakeSite([new SitePartDefWithParams(DefDatabase < SitePartDef >.GetNamed(def), new SitePartParams
                     {
                         threatPoints = (Find.Storyteller.difficulty.allowViolentQuests ? StorytellerUtility.DefaultSiteThreatPointsNow() : 0f)
                     })], tile, null, true, WorldObjectDefOf.ClaimableSite);
-                    site.customLabel = "Unknown Site";
                     return site;
                 case "OpportunitySite_AncientWarehouse":
                     tile.Tile.AddMutator(DefDatabase<TileMutatorDef>.GetNamed("AncientWarehouse"));
-                    site = SiteMaker.MakeSite([new SitePartDefWithParams(def, new SitePartParams
+                    site = SiteMaker.MakeSite([new SitePartDefWithParams(DefDatabase < SitePartDef >.GetNamed(def), new SitePartParams
                     {
                         threatPoints = (Find.Storyteller.difficulty.allowViolentQuests ? StorytellerUtility.DefaultSiteThreatPointsNow() : 0f)
                     })], tile, null, true, WorldObjectDefOf.ClaimableSite);
-                    site.customLabel = "Unknown Site";
                     return site;
-                case "OpportunitySite_AncientStructureLaunchSite":
+                case "OpportunitySite_AncientLaunchSite":
                     tile.Tile.AddMutator(DefDatabase<TileMutatorDef>.GetNamed("AncientLaunchSite"));
-                    site = SiteMaker.MakeSite([new SitePartDefWithParams(def, new SitePartParams
+                    site = SiteMaker.MakeSite([new SitePartDefWithParams(DefDatabase < SitePartDef >.GetNamed(def), new SitePartParams
                     {
                         threatPoints = (Find.Storyteller.difficulty.allowViolentQuests ? StorytellerUtility.DefaultSiteThreatPointsNow() : 0f)
                     })], tile, null, true, WorldObjectDefOf.ClaimableSite);
-                    site.customLabel = "Unknown Site";
                     return site;
                 case "OpportunitySite_AncientGarrison":
                     tile.Tile.AddMutator(DefDatabase<TileMutatorDef>.GetNamed("AncientGarrison"));
-                    site = SiteMaker.MakeSite([new SitePartDefWithParams(def, new SitePartParams
+                    site = SiteMaker.MakeSite([new SitePartDefWithParams(DefDatabase < SitePartDef >.GetNamed(def), new SitePartParams
                     {
                         threatPoints = (Find.Storyteller.difficulty.allowViolentQuests ? StorytellerUtility.DefaultSiteThreatPointsNow() : 0f)
                     })], tile, null, true, WorldObjectDefOf.ClaimableSite);
-                    site.customLabel = "Unknown Site";
                     return site;
                 case "OpportunitySite_AncientChemfuelRefinery":
                     tile.Tile.AddMutator(DefDatabase<TileMutatorDef>.GetNamed("AncientChemfuelRefinery"));
-                    site = SiteMaker.MakeSite([new SitePartDefWithParams(def, new SitePartParams
+                    site = SiteMaker.MakeSite([new SitePartDefWithParams(DefDatabase < SitePartDef >.GetNamed(def), new SitePartParams
                     {
                         threatPoints = (Find.Storyteller.difficulty.allowViolentQuests ? StorytellerUtility.DefaultSiteThreatPointsNow() : 0f)
                     })], tile, null, true, WorldObjectDefOf.ClaimableSite);
-                    site.customLabel = "Unknown Site";
+                    return site;
+                case "AncientStockpile":
+                    tile.Tile.AddMutator(DefDatabase<TileMutatorDef>.GetNamed("Stockpile"));
+                    site = SiteMaker.MakeSite([new SitePartDefWithParams(SitePartDefOf.PossibleUnknownThreatMarker, new SitePartParams
+                    {
+                        threatPoints = (Find.Storyteller.difficulty.allowViolentQuests ? StorytellerUtility.DefaultSiteThreatPointsNow() : 0f)
+                    })], tile, null, true, WorldObjectDefOf.ClaimableSite);
+                    return site;
+                case "AbandonedSettlement":
+                    tile.Tile.AddMutator(DefDatabase<TileMutatorDef>.GetNamed("AncientRuins"));
+                    site = SiteMaker.MakeSite([new SitePartDefWithParams(SitePartDefOf.PossibleUnknownThreatMarker, new SitePartParams
+                    {
+                        threatPoints = (Find.Storyteller.difficulty.allowViolentQuests ? StorytellerUtility.DefaultSiteThreatPointsNow() : 0f)
+                    })], tile, null, true, WorldObjectDefOf.ClaimableSite);
                     return site;
                 default:
-                    return null;
+                    return null; 
             }
         }
         private static PlanetTile GetProperTile(List<PlanetTile> tiles)
