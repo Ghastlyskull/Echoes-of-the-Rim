@@ -1,5 +1,6 @@
 ﻿using RimWorld;
 using RimWorld.Planet;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -9,14 +10,22 @@ namespace EOTR
 {
     public static class Helper
     {
+        public static readonly Dictionary<string, Func<string, PlanetTile, Site>> Handlers = new();
+
         public static void TrySetupCaravanEvent(Caravan caravan)
         {
-            if (Find.WorldObjects.SiteAt(caravan.Tile) != null)
+            
+            if (Find.WorldObjects.SiteAt(caravan.Tile) != null || Find.Maps.ContainsAny(c => c.Tile == caravan.Tile))
             {
                 return;
             }
             string def = GetRandomGroundSite();
-            Site site = SiteMaker.TryMakeSite([DefDatabase<SitePartDef>.GetNamed(def)], caravan.Tile);
+            if (def == "")
+            {
+                Log.Error("No appropriate site found");
+                return;
+            }
+            Site site = CreateSite(def, caravan.Tile);
             site.GetComponent<TimeoutComp>().StartTimeout(60000 * EchoesOfTheRim_Mod.Settings.despawnTimer);
             if (site == null)
             {
@@ -25,24 +34,36 @@ namespace EOTR
             else
             {
                 Find.WorldObjects.Add(site);
-                SendLetterCaravan(caravan, site);
+                SendLetter(caravan.pawns[0]);
             }
         }
         public static string GetRandomGroundSite()
         {
-            string potential = EchoesOfTheRim_Mod.Settings.structureDataActual.Keys.Where(x => EchoesOfTheRim_Mod.Settings.structureDataActual[x].enabled == true && !EchoesOfTheRim_Mod.Settings.structureDataActual[x].orbital).RandomElementByWeight(x => EchoesOfTheRim_Mod.Settings.structureDataActual[x].weight);
+            List<string> keys = EchoesOfTheRim_Mod.Settings.structureDataActual.Keys.Where(x => EchoesOfTheRim_Mod.Settings.structureDataActual[x].enabled == true && !EchoesOfTheRim_Mod.Settings.structureDataActual[x].orbital).ToList();
+            Log.Message(keys.Count());
+            if(keys.Count == 0)
+            {
+                return "";
+            }
+            string potential = keys.RandomElementByWeight(x => EchoesOfTheRim_Mod.Settings.structureDataActual[x].weight);
             Log.Message(potential);
             return potential;
         }
         public static string GetRandomOrbitSite()
         {
-            string potential = EchoesOfTheRim_Mod.Settings.structureDataActual.Keys.Where(x => EchoesOfTheRim_Mod.Settings.structureDataActual[x].enabled == true && EchoesOfTheRim_Mod.Settings.structureDataActual[x].orbital).RandomElementByWeight(x => EchoesOfTheRim_Mod.Settings.structureDataActual[x].weight);
+            List<string> keys = EchoesOfTheRim_Mod.Settings.structureDataActual.Keys.Where(x => EchoesOfTheRim_Mod.Settings.structureDataActual[x].enabled == true && EchoesOfTheRim_Mod.Settings.structureDataActual[x].orbital).ToList();
+            Log.Message(keys.Count());
+            if (keys.Count == 0)
+            {
+                return "";
+            }
+            string potential = keys.RandomElementByWeight(x => EchoesOfTheRim_Mod.Settings.structureDataActual[x].weight);
             Log.Message(potential);
             return potential;
         }
-        public static void SendLetterCaravan(Caravan caravan, Site site)
+/*        public static void SendLetterCaravan(Caravan caravan, Site site)
         {
-            DiaNode startNode = new DiaNode("EOTR_CaravanSite_LetterText".Translate(site.LabelCap));
+            DiaNode startNode = new DiaNode("EOTR_CaravanSite_LetterText".Translate());
             DiaOption enterNow = new DiaOption("EOTR_CaravanSite_LetterEnterNow".Translate());
             enterNow.resolveTree = true;
             enterNow.action = () =>
@@ -57,7 +78,7 @@ namespace EOTR
             startNode.options.Add(enterNow);
             startNode.options.Add(markForLater);
             Find.WindowStack.Add(new Dialog_NodeTree(startNode));
-        }
+        }*/
 
         public static void TrySetupTransporterEvent(TravellingTransporters travellingTransporters, List<ActiveTransporterInfo> transporters, PlanetTile initialTile, Pawn p)
         {
@@ -77,6 +98,11 @@ namespace EOTR
             Log.Message("Part 2");
             string def;
             def = orbit ? GetRandomOrbitSite() : GetRandomGroundSite();
+            if (def == "")
+            {
+                Log.Error("No appropriate site found");
+                return;
+            }
             Log.Message("Part 3");
             Site site = CreateSite(def, eventTile);
             Log.Message("Part 4");
@@ -89,11 +115,13 @@ namespace EOTR
                 site.GetComponent<TimeoutComp>().StartTimeout(60000 * EchoesOfTheRim_Mod.Settings.despawnTimer);
                 Find.WorldObjects.Add(site);
                 CameraJumper.TryJump(site);
-                SendLetterTransporter(p, site);
+                SendLetter(p);
             }
         }
         public static Site CreateSite(string def, PlanetTile tile)
         {
+            Log.Message(def);
+            Log.Message(tile);
             EchoesOfTheRim_Mod.Settings.structureDataActual.TryGetValue(def, out var data);
             if (data == null || !data.enabled)
             {
@@ -101,77 +129,31 @@ namespace EOTR
                 return null;
             }
             Site site;
-            switch (data.source)
+            Log.Message("Stage 1");
+            if (Handlers.ContainsKey(data.source))
             {
-                case "Odyssey":
-                    site = OdysseySites(def, tile);
-                    break;
-                case "Ancient urban ruins":
-                    site = AncientUrbanRuinsSites(def, tile);
-                    break;
-                default:
-                    site = SiteMaker.TryMakeSite([DefDatabase<SitePartDef>.GetNamed(def)], tile);
-                    break;
+                Log.Message("Stage 2.1");
+                site = Handlers[data.source].Invoke(def, tile);
+            }
+            else
+            {
+                Log.Message("Stage 2.2");
+
+                switch (data.source)
+                {
+                    case "Odyssey":
+                        site = OdysseySites(def, tile);
+                        break;
+                    default:
+                        site = SiteMaker.TryMakeSite([DefDatabase<SitePartDef>.GetNamed(def)], tile);
+                        break;
+                }
             }
             if (site != null)
             {
                 site.customLabel = "Unknown Site";
             }
             return site;
-        }
-        private static Site AncientUrbanRuinsSites(string def, PlanetTile tile)
-        {
-            WorldObjectDef objectDef = DefDatabase<WorldObjectDef>.GetNamed("AM_CustomSite");
-            switch (def)
-            {
-                case "AM_Mall_S_Site":
-                case "AM_StreetSite":
-                case "AM_ReserveSite":
-                case "AM_MALL_L_Site":
-                    Site site = SiteMaker.MakeSite([new SitePartDefWithParams(DefDatabase<SitePartDef>.GetNamed(def), new SitePartParams())], tile, null, true, objectDef);
-                    site.customLabel = "Unknown Site";
-                    return site;
-                case "ACM_AncientRandomComplex":
-                    SimpleCurve ComplexSizeOverPointsCurve = new(){
-                                                                         new CurvePoint(0f, 30f),
-                                                                         new CurvePoint(10000f, 50f)
-                                                                       };
-
-                    SimpleCurve ThreatPointsOverPointsCurve = new SimpleCurve{
-                                                                                   new CurvePoint(35f, 38.5f),
-                                                                                   new CurvePoint(400f, 165f),
-                                                                                   new CurvePoint(10000f, 4125f)
-                                                                             };
-
-                    int num = (int)ComplexSizeOverPointsCurve.Evaluate(7000);
-                    StructureGenParams psarms = new StructureGenParams
-                    {
-                        size = new IntVec2(num, num)
-                    };
-                    LayoutStructureSketch layoutStructureSketch = DefDatabase<LayoutDef>.GetNamed("ACM_AncientRandomComplex_Loot").Worker.GenerateStructureSketch(psarms);
-                    layoutStructureSketch.spawned = false;
-                    if (layoutStructureSketch != null)
-                    {
-                        layoutStructureSketch.spawned = false;
-                        SitePartParams parms = new SitePartParams
-                        {
-                            threatPoints = (Find.Storyteller.difficulty.allowViolentQuests ? ThreatPointsOverPointsCurve.Evaluate(StorytellerUtility.DefaultSiteThreatPointsNow()) : 0f),
-                            ancientLayoutStructureSketch = layoutStructureSketch,
-                            ancientComplexRewardMaker = ThingSetMakerDefOf.MapGen_AncientComplexRoomLoot_Better
-                        };
-                        site = SiteMaker.MakeSite(Gen.YieldSingle(new SitePartDefWithParams(DefDatabase<SitePartDef>.GetNamed(def), parms)), tile, Faction.OfAncients);
-                        TimedDetectionRaids component = site.GetComponent<TimedDetectionRaids>();
-                        if (component != null)
-                        {
-                            component.alertRaidsArrivingIn = true;
-                        }
-                        return site;
-                    }
-                    return null;
-                default:
-                    return null;
-
-            }
         }
         private static Site OdysseySites(string def, PlanetTile tile)
         {
@@ -235,19 +217,20 @@ namespace EOTR
                     })], tile, null, true, WorldObjectDefOf.ClaimableSite);
                     return site;
                 default:
-                    return null; 
+                    return null;
             }
         }
         private static PlanetTile GetProperTile(List<PlanetTile> tiles)
         {
-            List<PlanetTile> compatTiles = tiles.Distinct().Where(t => t.Valid && !Find.World.Impassable(t) && Find.WorldObjects.SiteAt(t) == null).ToList();
+            List<PlanetTile> compatTiles = tiles.Distinct().Where(t => t.Valid && !Find.World.Impassable(t) && Find.WorldObjects.SiteAt(t) == null && !Find.Maps.ContainsAny(c => c.Tile == t)).ToList();
             Log.Message(compatTiles.Count());
             List<PlanetTile> possibleChoices = [.. compatTiles];
             foreach (var t in compatTiles)
             {
                 List<PlanetTile> neighbors = [];
                 Find.WorldGrid.GetTileNeighbors(t, neighbors);
-                possibleChoices.AddRange(neighbors.Where(t => t.Valid && !Find.World.Impassable(t) && Find.WorldObjects.SiteAt(t) == null && !possibleChoices.Contains(t)));
+                List<PlanetTile> filtered = neighbors.Where(t => t.Valid && !Find.World.Impassable(t) && Find.WorldObjects.SiteAt(t) == null && !possibleChoices.Contains(t)).ToList();
+                possibleChoices.AddRange(filtered);
             }
             return possibleChoices.RandomElement();
         }
@@ -275,14 +258,14 @@ namespace EOTR
             return GetProperTile(pathTiles);
         }
 
-        private static void SendLetterTransporter(Pawn p, Site site)
+/*        private static void SendLetterTransporter(Pawn p, Site site)
         {
             DiaNode startNode = new DiaNode("EOTR_TransporterSite_LetterText".Translate(p.LabelCap, site.LabelCap));
             DiaOption markForLater = new DiaOption("EOTR_CaravanSite_LetterMarkForLater".Translate());
             markForLater.resolveTree = true;
             startNode.options.Add(markForLater);
             Find.WindowStack.Add(new Dialog_NodeTree(startNode));
-        }
+        }*/
 
         public static PlanetTile GetEventTilePathed(PlanetTile initialTile, PlanetTile destTile)
         {
@@ -337,5 +320,53 @@ namespace EOTR
             return path;
         }
 
+        public static void TrySetupGravshipEvent(Gravship gravship)
+        {
+            PlanetTile eventTile;
+            bool orbit = false;
+            PlanetTile initialTile = gravship.initialTile;
+            PlanetTile destinationTile = gravship.destinationTile;
+            if (initialTile.LayerDef == destinationTile.LayerDef)
+            {
+                eventTile = GetEventTilePathed(initialTile, destinationTile);
+                orbit = initialTile.LayerDef == PlanetLayerDefOf.Orbit ? true : false;
+            }
+            else
+            {
+                eventTile = GetEventTileRandom(initialTile, destinationTile, out orbit);
+            }
+            Log.Message(orbit);
+            Log.Message(eventTile);
+            Log.Message("Part 2");
+            string def;
+            def = orbit ? GetRandomOrbitSite() : GetRandomGroundSite();
+            if (def == "")
+            {
+                Log.Error("No appropriate site found");
+                return;
+            }
+            Log.Message("Part 3");
+            Site site = CreateSite(def, eventTile);
+            Log.Message("Part 4");
+            if (site == null)
+            {
+                Log.Error("Could not make a site.");
+            }
+            else
+            {
+                site.GetComponent<TimeoutComp>().StartTimeout(60000 * EchoesOfTheRim_Mod.Settings.despawnTimer);
+                Find.WorldObjects.Add(site);
+                CameraJumper.TryJump(site);
+                SendLetter(gravship.Pawns.Where(c=>c.HostFaction == null && c.IsColonist).RandomElement());
+            }
+        }
+        private static void SendLetter(Pawn p)
+        {
+            DiaNode startNode = new DiaNode("EOTR_Site".Translate(p.LabelCap));
+            DiaOption markForLater = new DiaOption("OK".Translate());
+            markForLater.resolveTree = true;
+            startNode.options.Add(markForLater);
+            Find.WindowStack.Add(new Dialog_NodeTree(startNode));
+        }
     }
 }

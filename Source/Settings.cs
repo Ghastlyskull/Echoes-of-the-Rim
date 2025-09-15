@@ -54,21 +54,20 @@ namespace EOTR
         private Vector2 _scrollPosition;
         public List<string> modsEnabled = [];
         //Big and ugly but it just works
-        private readonly string[] mods ={
+        public static List<string> mods = new(){
             "Alpha Genes", "Alpha Books", "Vanilla Genetics Expanded", "Vanilla Quests Expanded - Generator",
-            "Vanilla Quests Expanded - Deadlife", "Mechanitor Orbital Platform", "Ancient urban ruins",
-            "Ancient mining industry", "Ancient hydroponic farm facilities", "Protocol Anomaly: Syndicate"
+            "Vanilla Quests Expanded - Deadlife", "Mechanitor Orbital Platform","Ancient mining industry",
+            "Ancient hydroponic farm facilities", "Protocol Anomaly: Syndicate"
         };
-        private readonly Dictionary<string, List<string>> siteDictionaryOrbit = new() {{ "Odyssey", ["Opportunity_OrbitalWreck", "Opportunity_MechanoidPlatform", "Opportunity_AbandonedPlatform"] },
+        public static Dictionary<string, List<string>> siteDictionaryOrbit = new() {{ "Odyssey", ["Opportunity_OrbitalWreck", "Opportunity_MechanoidPlatform", "Opportunity_AbandonedPlatform"] },
             { "Mechanitor Orbital Platform", ["Opportunity_AbandonedMechanitorPlatform"]}};
-        private readonly Dictionary<string, List<string>> siteDictionaryGround = new()
+        public static Dictionary<string, List<string>> siteDictionaryGround = new()
         {
     { "Alpha Genes", ["AG_AbandonedBiotechLab"] },
     { "Alpha Books", [ "ABooks_RuinedLibrary" ] },
     { "Vanilla Genetics Expanded", ["GR_AbandonedLab"] },
     { "Vanilla Quests Expanded - Generator", [ "VQE_Quest1Site" ] },
     { "Vanilla Quests Expanded - Deadlife", ["VQE_AncientSilo"]},
-    { "Ancient urban ruins",[ "AM_MALL_S_Site", "AM_MALL_L_Site", "AM_ReserveSite", "AM_StreetSite", "ACM_AncientRandomComplex" ] },
     { "Ancient mining industry", ["AbandonedMine_Site", "MineralScreeningStation_Site", "AbandonedPlasteelMineSite_Site",
           "AbandonedUraniumMiningSite_Site", "AbandonedSteelMineSite_Site",
           "AncientOpenPitMiningSite_Site", "AncientTunnelRuins_Site" ] },
@@ -84,7 +83,55 @@ namespace EOTR
     {"Core", ["BanditCamp"] }
 };
 
+        public void InitializeMod(string modName, List<string> sitesOrbit, List<string> sitesGround)
+        {
+            if (mods.Contains(modName))
+            {
+                return;
+            }
+            mods.Add(modName);
+            if (ModLister.HasActiveModWithName(modName))
+            {
+                modsEnabled.Add(modName);
+            }
+            if (sitesGround.Count > 0)
+            {
+                siteDictionaryGround[modName] = sitesGround;
+            }
+            if(sitesOrbit.Count > 0)
+            {
+                siteDictionaryOrbit[modName] = sitesOrbit;
+            }
+            foreach (string defName in sitesGround)
+            {
+                Log.Message(" - " + defName);
+                if (structureDataSaved.ContainsKey(defName))
+                {
+                    structureDataActual[defName] = structureDataSaved[defName];
+                }
+                else
+                {
+                    StructureData newData = new StructureData(defName, true, 10, false, modName);
+                    newData.labelCap = DefDatabase<SitePartDef>.AllDefsListForReading.Where(x => x.defName == defName).First().LabelCap;
+                    structureDataActual[defName] = newData;
+                }
+            }
+            foreach (string defName in sitesOrbit)
+            {
+                Log.Message(" - " + defName);
+                if (structureDataSaved.ContainsKey(defName))
+                {
+                    structureDataActual[defName] = structureDataSaved[defName];
+                }
+                else
+                {
+                    StructureData newData = new StructureData(defName, true, 10, true, modName);
+                    newData.labelCap = DefDatabase<SitePartDef>.AllDefsListForReading.Where(x => x.defName == defName).First().LabelCap;
+                    structureDataActual[defName] = newData;
+                }
+            }
 
+        }
         public void Initialize()
         {
             structureDataActual = [];
@@ -161,7 +208,6 @@ namespace EOTR
 
             }
             #endregion
-            structureDataSaved = structureDataActual;
         }
         public override void ExposeData()
         {
