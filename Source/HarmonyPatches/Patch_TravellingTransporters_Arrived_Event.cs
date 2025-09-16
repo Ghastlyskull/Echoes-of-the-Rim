@@ -20,8 +20,8 @@ namespace EOTR.HarmonyPatches
         }
         public static bool Prefix(TravellingTransporters __instance, List<ActiveTransporterInfo> ___transporters, PlanetTile ___initialTile)
         {
-            Log.Message("RAAAH");
-            Log.Message(___transporters.Count());
+            ////Log.Message("RAAAH");
+            ////Log.Message(___transporters.Count());
             if (__instance.PodsHaveAnyFreeColonist)
             {
                 Pawn p = __instance.Pawns.Where(p => p.IsColonist && p.HostFaction == null).RandomElement();

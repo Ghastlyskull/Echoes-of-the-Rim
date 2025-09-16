@@ -40,25 +40,25 @@ namespace EOTR
         public static string GetRandomGroundSite()
         {
             List<string> keys = EchoesOfTheRim_Mod.Settings.structureDataActual.Keys.Where(x => EchoesOfTheRim_Mod.Settings.structureDataActual[x].enabled == true && !EchoesOfTheRim_Mod.Settings.structureDataActual[x].orbital).ToList();
-            Log.Message(keys.Count());
+            //Log.Message(keys.Count());
             if(keys.Count == 0)
             {
                 return "";
             }
             string potential = keys.RandomElementByWeight(x => EchoesOfTheRim_Mod.Settings.structureDataActual[x].weight);
-            Log.Message(potential);
+            //Log.Message(potential);
             return potential;
         }
         public static string GetRandomOrbitSite()
         {
             List<string> keys = EchoesOfTheRim_Mod.Settings.structureDataActual.Keys.Where(x => EchoesOfTheRim_Mod.Settings.structureDataActual[x].enabled == true && EchoesOfTheRim_Mod.Settings.structureDataActual[x].orbital).ToList();
-            Log.Message(keys.Count());
+            //Log.Message(keys.Count());
             if (keys.Count == 0)
             {
                 return "";
             }
             string potential = keys.RandomElementByWeight(x => EchoesOfTheRim_Mod.Settings.structureDataActual[x].weight);
-            Log.Message(potential);
+            //Log.Message(potential);
             return potential;
         }
 /*        public static void SendLetterCaravan(Caravan caravan, Site site)
@@ -93,9 +93,9 @@ namespace EOTR
             {
                 eventTile = GetEventTileRandom(initialTile, travellingTransporters.destinationTile, out orbit);
             }
-            Log.Message(orbit);
-            Log.Message(eventTile);
-            Log.Message("Part 2");
+            //Log.Message(orbit);
+            //Log.Message(eventTile);
+            //Log.Message("Part 2");
             string def;
             def = orbit ? GetRandomOrbitSite() : GetRandomGroundSite();
             if (def == "")
@@ -103,9 +103,9 @@ namespace EOTR
                 Log.Error("No appropriate site found");
                 return;
             }
-            Log.Message("Part 3");
+            //Log.Message("Part 3");
             Site site = CreateSite(def, eventTile);
-            Log.Message("Part 4");
+            //Log.Message("Part 4");
             if (site == null)
             {
                 Log.Error("Could not make a site.");
@@ -120,8 +120,8 @@ namespace EOTR
         }
         public static Site CreateSite(string def, PlanetTile tile)
         {
-            Log.Message(def);
-            Log.Message(tile);
+            //Log.Message(def);
+            //Log.Message(tile);
             EchoesOfTheRim_Mod.Settings.structureDataActual.TryGetValue(def, out var data);
             if (data == null || !data.enabled)
             {
@@ -129,15 +129,15 @@ namespace EOTR
                 return null;
             }
             Site site;
-            Log.Message("Stage 1");
+            //Log.Message("Stage 1");
             if (Handlers.ContainsKey(data.source))
             {
-                Log.Message("Stage 2.1");
+                //Log.Message("Stage 2.1");
                 site = Handlers[data.source].Invoke(def, tile);
             }
             else
             {
-                Log.Message("Stage 2.2");
+                //Log.Message("Stage 2.2");
 
                 switch (data.source)
                 {
@@ -154,7 +154,7 @@ namespace EOTR
             }
             if (site != null)
             {
-                site.customLabel = "Unknown Site";
+                site.customLabel = "EOTR_UnknownSite".Translate();
             }
             return site;
         }
@@ -234,7 +234,7 @@ namespace EOTR
         private static PlanetTile GetProperTile(List<PlanetTile> tiles)
         {
             List<PlanetTile> compatTiles = tiles.Distinct().Where(t => t.Valid && !Find.World.Impassable(t) && Find.WorldObjects.SiteAt(t) == null && !Find.Maps.ContainsAny(c => c.Tile == t)).ToList();
-            Log.Message(compatTiles.Count());
+            //Log.Message(compatTiles.Count());
             List<PlanetTile> possibleChoices = [.. compatTiles];
             foreach (var t in compatTiles)
             {
@@ -346,9 +346,9 @@ namespace EOTR
             {
                 eventTile = GetEventTileRandom(initialTile, destinationTile, out orbit);
             }
-            Log.Message(orbit);
-            Log.Message(eventTile);
-            Log.Message("Part 2");
+            //Log.Message(orbit);
+            //Log.Message(eventTile);
+            //Log.Message("Part 2");
             string def;
             def = orbit ? GetRandomOrbitSite() : GetRandomGroundSite();
             if (def == "")
@@ -356,9 +356,9 @@ namespace EOTR
                 Log.Error("No appropriate site found");
                 return;
             }
-            Log.Message("Part 3");
+            //Log.Message("Part 3");
             Site site = CreateSite(def, eventTile);
-            Log.Message("Part 4");
+            //Log.Message("Part 4");
             if (site == null)
             {
                 Log.Error("Could not make a site.");

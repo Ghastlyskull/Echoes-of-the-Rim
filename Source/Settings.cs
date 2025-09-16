@@ -98,7 +98,7 @@ namespace EOTR
             {
                 siteDictionaryGround[modName] = sitesGround;
             }
-            if(sitesOrbit.Count > 0)
+            if (sitesOrbit.Count > 0)
             {
                 siteDictionaryOrbit[modName] = sitesOrbit;
             }
@@ -168,7 +168,7 @@ namespace EOTR
             #region Loading settings
             foreach (string modName in modsEnabled)
             {
-                if(siteDictionaryGround.ContainsKey(modName))
+                if (siteDictionaryGround.ContainsKey(modName))
                 {
                     Log.Message("Checking for " + modName);
                     foreach (string defName in siteDictionaryGround[modName])
@@ -224,7 +224,7 @@ namespace EOTR
             {
                 rect2.height += labelHeight;
                 int count = 0;
-                if( siteDictionaryGround.ContainsKey(modName))
+                if (siteDictionaryGround.ContainsKey(modName))
                 {
                     count += siteDictionaryGround[modName].Count;
                 }
@@ -256,8 +256,10 @@ namespace EOTR
             }
             foreach (string modName in modsEnabled)
             {
-
-                listing_Standard.Label(modName);
+                using (new TextBlock(GameFont.Medium))
+                {
+                    listing_Standard.Label(modName);
+                }
                 if (siteDictionaryGround.ContainsKey(modName))
                 {
                     foreach (string siteName in siteDictionaryGround[modName])
