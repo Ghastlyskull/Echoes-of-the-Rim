@@ -36,7 +36,10 @@ namespace AncientUrbanRuinsCompat
             {
                 Log.Message("WTF");
                 Site site = GenerateCustomSite(
-                    new[] { new SitePartDefWithParams(DefDatabase<SitePartDef>.GetNamed(def), new SitePartParams()) },
+                    new[] { new SitePartDefWithParams(DefDatabase<SitePartDef>.GetNamed(def), new SitePartParams()
+                    {
+                        threatPoints = (Find.Storyteller.difficulty.allowViolentQuests ? StorytellerUtility.DefaultSiteThreatPointsNow() : 0f)
+                    }) },
                     tile,
                     null,
                     true
