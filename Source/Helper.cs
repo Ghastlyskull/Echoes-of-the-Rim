@@ -144,6 +144,9 @@ namespace EOTR
                     case "Odyssey":
                         site = OdysseySites(def, tile);
                         break;
+                    case "Mechanitor Orbital Platform":
+                        site = MechanitorOrbitalPlatform(def, tile);
+                        break;
                     default:
                         site = SiteMaker.TryMakeSite([DefDatabase<SitePartDef>.GetNamed(def)], tile);
                         break;
@@ -219,6 +222,14 @@ namespace EOTR
                 default:
                     return null;
             }
+        }
+        private static Site MechanitorOrbitalPlatform(string def, PlanetTile tile)
+        {
+            Site site = SiteMaker.MakeSite([new SitePartDefWithParams(DefDatabase < SitePartDef >.GetNamed(def), new SitePartParams
+                    {
+                        threatPoints = (Find.Storyteller.difficulty.allowViolentQuests ? StorytellerUtility.DefaultSiteThreatPointsNow() : 0f)
+                    })], tile, null, true, WorldObjectDefOf.ClaimableSpaceSite);
+            return site;
         }
         private static PlanetTile GetProperTile(List<PlanetTile> tiles)
         {
