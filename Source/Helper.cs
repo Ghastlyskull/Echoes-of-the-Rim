@@ -34,7 +34,7 @@ namespace EOTR
             else
             {
                 Find.WorldObjects.Add(site);
-                SendLetter(caravan.pawns[0]);
+                SendLetterCaravan(caravan.pawns[0]);
             }
         }
         public static string GetRandomGroundSite()
@@ -115,7 +115,7 @@ namespace EOTR
                 site.GetComponent<TimeoutComp>().StartTimeout(60000 * EchoesOfTheRim_Mod.Settings.despawnTimer);
                 Find.WorldObjects.Add(site);
                 CameraJumper.TryJump(site);
-                SendLetter(p);
+                SendLetterFlier(p);
             }
         }
         public static Site CreateSite(string def, PlanetTile tile)
@@ -368,16 +368,25 @@ namespace EOTR
                 site.GetComponent<TimeoutComp>().StartTimeout(60000 * EchoesOfTheRim_Mod.Settings.despawnTimer);
                 Find.WorldObjects.Add(site);
                 CameraJumper.TryJump(site);
-                SendLetter(gravship.Pawns.Where(c=>c.HostFaction == null && c.IsColonist).RandomElement());
+                SendLetterFlier(gravship.Pawns.Where(c=>c.HostFaction == null && c.IsColonist).RandomElement());
             }
         }
-        public static void SendLetter(Pawn p)
+        public static void SendLetterCaravan(Pawn p)
         {
-            DiaNode startNode = new DiaNode("EOTR_Site".Translate(p.LabelCap));
+            DiaNode startNode = new DiaNode("EOTR_SiteCaravan".Translate(p.LabelCap));
             DiaOption markForLater = new DiaOption("OK".Translate());
             markForLater.resolveTree = true;
             startNode.options.Add(markForLater);
             Find.WindowStack.Add(new Dialog_NodeTree(startNode));
         }
+        public static void SendLetterFlier(Pawn p)
+        {
+            DiaNode startNode = new DiaNode("EOTR_SiteFlier".Translate(p.LabelCap));
+            DiaOption markForLater = new DiaOption("OK".Translate());
+            markForLater.resolveTree = true;
+            startNode.options.Add(markForLater);
+            Find.WindowStack.Add(new Dialog_NodeTree(startNode));
+        }
+
     }
 }

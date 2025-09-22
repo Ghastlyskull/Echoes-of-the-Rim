@@ -48,7 +48,7 @@ namespace VehicleFrameworkCompat
                 site.GetComponent<TimeoutComp>().StartTimeout(60000 * EchoesOfTheRim_Mod.Settings.despawnTimer);
                 Find.WorldObjects.Add(site);
                 CameraJumper.TryJump(site);
-                Helper.SendLetter(p);
+                Helper.SendLetterFlier(p);
             }
         }
     }
