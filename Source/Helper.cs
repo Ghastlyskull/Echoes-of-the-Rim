@@ -158,7 +158,7 @@ namespace EOTR
             }
             return site;
         }
-        private static Site OdysseySites(string def, PlanetTile tile)
+        public static Site OdysseySites(string def, PlanetTile tile)
         {
             switch (def)
             {
@@ -223,7 +223,7 @@ namespace EOTR
                     return null;
             }
         }
-        private static Site MechanitorOrbitalPlatform(string def, PlanetTile tile)
+        public static Site MechanitorOrbitalPlatform(string def, PlanetTile tile)
         {
             Site site = SiteMaker.MakeSite([new SitePartDefWithParams(DefDatabase < SitePartDef >.GetNamed(def), new SitePartParams
                     {
@@ -231,7 +231,7 @@ namespace EOTR
                     })], tile, null, true, WorldObjectDefOf.ClaimableSpaceSite);
             return site;
         }
-        private static PlanetTile GetProperTile(List<PlanetTile> tiles)
+        public static PlanetTile GetProperTile(List<PlanetTile> tiles)
         {
             List<PlanetTile> compatTiles = tiles.Distinct().Where(t => t.Valid && !Find.World.Impassable(t) && Find.WorldObjects.SiteAt(t) == null && !Find.Maps.ContainsAny(c => c.Tile == t)).ToList();
             //Log.Message(compatTiles.Count());
@@ -245,7 +245,7 @@ namespace EOTR
             }
             return possibleChoices.RandomElement();
         }
-        private static PlanetTile GetEventTileRandom(PlanetTile initialTile, PlanetTile destTile, out bool orbit)
+        public static PlanetTile GetEventTileRandom(PlanetTile initialTile, PlanetTile destTile, out bool orbit)
         {
             List<PlanetTile> pathTiles;
             if (Rand.Chance(0.5f))
@@ -371,7 +371,7 @@ namespace EOTR
                 SendLetter(gravship.Pawns.Where(c=>c.HostFaction == null && c.IsColonist).RandomElement());
             }
         }
-        private static void SendLetter(Pawn p)
+        public static void SendLetter(Pawn p)
         {
             DiaNode startNode = new DiaNode("EOTR_Site".Translate(p.LabelCap));
             DiaOption markForLater = new DiaOption("OK".Translate());
