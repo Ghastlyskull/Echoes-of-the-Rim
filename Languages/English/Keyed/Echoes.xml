@@ -7,6 +7,6 @@
 	<EOTR_Weight>Weight: {0}</EOTR_Weight>
 	<EOTR_CaravanSite_LetterMarkForLater>Mark for Later</EOTR_CaravanSite_LetterMarkForLater>
 	<EOTR_SiteFlier>While flying to their destination, {0} spotted a hidden site and marked the location on the map for later exploration.</EOTR_SiteFlier>
-	<EOTR_SiteCaravan>One their route, {0}'s caravan has stumbled upon a hidden structure and the location has been marked on your map. There may be valuables inside, but danger could be lurking as well.</EOTR_SiteCaravan>
+	<EOTR_SiteCaravan>One their route, {0}'s caravan has stumbled upon a hidden structure and marked the location on your map. There may be valuables inside, but danger could be lurking as well.</EOTR_SiteCaravan>
 	<EOTR_UnknownSite>Hidden Site</EOTR_UnknownSite>
 </LanguageData>
