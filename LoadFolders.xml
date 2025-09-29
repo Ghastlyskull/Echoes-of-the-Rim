@@ -5,6 +5,7 @@
 		<li>1.6</li>
 		<li IfModActive="xmb.ancienturbanruins.mo">1.6/Compat/Ancient urban ruins</li>
 		<li IfModActive="smashphil.vehicleframework">1.6/Compat/VehicleFramework</li>
+		<li IfModActive="dankpyon.medieval.overhaul">1.6/Compat/MedievalOverhaulCompat</li>
 
 	</v1.6>
 </loadFolders>
