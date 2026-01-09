@@ -15,7 +15,7 @@ namespace EOTR
         public static void TrySetupCaravanEvent(Caravan caravan)
         {
             
-            if (Find.WorldObjects.SiteAt(caravan.Tile) != null || Find.Maps.ContainsAny(c => c.Tile == caravan.Tile))
+            if (Find.WorldObjects.AnyMapParentAt(caravan.Tile))
             {
                 return;
             }

@@ -139,19 +139,19 @@ namespace EOTR
             modsEnabled.Add("Core");
             #endregion
             #region Ideology
-            if (ModLister.IdeologyInstalled)
+            if (ModLister.HasActiveModWithName("Ideology"))
             {
                 modsEnabled.Add("Ideology");
             }
             #endregion
             #region Biotech
-            if (ModLister.BiotechInstalled)
+            if (ModLister.HasActiveModWithName("Biotech"))
             {
                 modsEnabled.Add("Biotech");
             }
             #endregion
             #region Odyssey
-            if (ModLister.OdysseyInstalled)
+            if (ModLister.HasActiveModWithName("Odyssey"))
             {
                 modsEnabled.Add("Odyssey");
             }
